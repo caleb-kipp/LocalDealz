@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LocalDealz - Buy cheaper, sell faster, locally</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/9.2.0/swiper-bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/9.2.0/swiper-bundle.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style id="app-style">
+    body {
+      font-family: 'Poppins', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      color: #333;
+      background-color: #f8fafc;
+    }
+    
+    .bottom-nav {
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .listing-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .listing-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .distance-badge {
+      background-color: rgba(0,0,0,0.6);
+      color: white;
+    }
+    
+    .quick-sale-badge {
+      background-color: #ff6b6b;
+      color: white;
+    }
+    
+    .verified-badge {
+      color: #4ade80;
+      font-size: 16px;
+    }
+    
+    .loading-spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .sell-button {
+      transform: translateY(-50%);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    
+    .message-bubble {
+      max-width: 80%;
+      border-radius: 16px;
+      padding: 8px 16px;
+      margin: 4px 0;
+    }
+    
+    .sent {
+      background-color: #4ade80;
+      color: white;
+      margin-left: auto;
+      border-top-right-radius: 4px;
+    }
+    
+    .received {
+      background-color: #e5e7eb;
+      margin-right: auto;
+      border-top-left-radius: 4px;
+    }
+    
+    .typing-indicator {
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .typing-indicator span {
+      width: 5px;
+      height: 5px;
+      background-color: #888;
+      border-radius: 50%;
+      margin: 0 1px;
+      animation: typingAnimation 1.5s infinite ease-in-out;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    
+    @keyframes typingAnimation {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+      100% { transform: translateY(0); }
+    }
+    
+    .swiper {
+      width: 100%;
+      height: 300px;
+    }
+    
+    .price-tag {
+      background-color: #22c55e;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    
+    .image-upload-placeholder {
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+      min-height: 150px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .image-upload-placeholder:hover {
+      border-color: #64748b;
+      background-color: #f1f5f9;
+    }
+    
+    .range-slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background-color: #22c55e;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+      outline: 2px solid #22c55e;
+      outline-offset: 0;
+    }
+
+    .logo {
+      font-weight: 700;
+      background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+      0% {
+        background-position: 200% 0;
+      }
+      100% {
+        background-position: -200% 0;
+      }
+    }
+  </style>
+</head>
+<body class="pb-20" x-data="{ activeTab: 'home', showSearch: false, showFilters: false, showMap: false, currentModal: null }">
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-white shadow-sm">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-xl logo flex items-center">
+        <i class="fas fa-handshake mr-2"></i>
+        LocalDealz
+      </h1>
+      <div class="flex items-center gap-2">
+        <button @click="showSearch = !showSearch" class="p-2 rounded-full hover:bg-gray-100">
+          <i class="fas fa-search"></i>
+        </button>
+        <button @click="showFilters = !showFilters" class="p-2 rounded-full hover:bg-gray-100">
+          <i class="fas fa-sliders-h"></i>
+        </button>
+        <button @click="showMap = !showMap" class="p-2 rounded-full hover:bg-gray-100">
+          <i class="fas fa-map-marker-alt"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Search Bar (collapsible) -->
+    <div x-show="showSearch" x-transition class="px-4 py-2 bg-white border-t border-gray-100">
+      <div class="relative">
+        <input type="text" placeholder="Search products..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200">
+        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+      </div>
+    </div>
+    
+    <!-- Filters (collapsible) -->
+    <div x-show="showFilters" x-transition class="px-4 py-3 bg-white border-t border-gray-100">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm text-gray-600 block mb-1">Category</label>
+          <select class="w-full p-2 rounded-lg border border-gray-200 bg-white">
+            <option value="">All Categories</option>
+            <option value="electronics">Phones & Electronics</option>
+            <option value="furniture">Furniture</option>
+            <option value="clothes">Clothes & Shoes</option>
+            <option value="appliances">Home Appliances</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-gray-600 block mb-1">Price Range</label>
+          <div class="flex items-center gap-2">
+            <input type="number" placeholder="Min" class="w-full p-2 rounded-lg border border-gray-200">
+            <span>-</span>
+            <input type="number" placeholder="Max" class="w-full p-2 rounded-lg border border-gray-200">
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <label class="text-sm text-gray-600 block mb-1">Distance (km): <span x-text="10" class="font-medium"></span></label>
+        <input type="range" min="1" max="50" value="10" class="w-full range-slider">
+      </div>
+      <div class="mt-3 flex justify-end">
+        <button class="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600">Apply Filters</button>
+      </div>
+    </div>
+    
+    <!-- Map View (collapsible) -->
+    <div x-show="showMap" x-transition class="border-t border-gray-100">
+      <div class="h-48 bg-gray-200 flex items-center justify-center text-gray-500">
+        <div class="text-center">
+          <i class="fas fa-map-marked-alt text-3xl mb-2"></i>
+          <p>Map View - See listings around you</p>
+          <p class="text-xs">(Tap to enable location)</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container mx-auto px-4 py-4">
+    <!-- Home Tab Content -->
+    <div x-show="activeTab === 'home'" class="space-y-4">
+      <h2 class="text-lg font-semibold">Nearby Deals</h2>
+      
+      <!-- Featured Listings -->
+      <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-medium text-green-800">Featured Items</h3>
+          <a href="javascript:void(0)" class="text-sm text-green-600">View All</a>
+        </div>
+        <div class="flex gap-4 overflow-x-auto pb-2">
+          <!-- Featured Item 1 -->
+          <div class="flex-shrink-0 w-40 bg-white rounded-lg overflow-hidden shadow-sm">
+            <div class="relative">
+              <img src="https://cdn.pixabay.com/photo/2016/11/29/12/30/phone-1869510_960_720.jpg" alt="iPhone" class="w-full h-32 object-cover">
+              <span class="badge quick-sale-badge">Quick Sale</span>
+            </div>
+            <div class="p-2">
+              <div class="flex justify-between items-start">
+                <h4 class="font-medium text-sm line-clamp-1">iPhone 14 Pro</h4>
+                <button class="text-gray-400 hover:text-red-500">
+                  <i class="far fa-heart"></i>
+                </button>
+              </div>
+              <div class="flex justify-between items-center mt-1">
+                <span class="font-bold text-green-600">KSh 85,000</span>
+                <span class="text-xs text-gray-500">1.2 km</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Featured Item 2 -->
+          <div class="flex-shrink-0 w-40 bg-white rounded-lg overflow-hidden shadow-sm">
+            <div class="relative">
+              <img src="https://cdn.pixabay.com/photo/2017/12/09/08/18/tv-3007539_960_720.jpg" alt="TV" class="w-full h-32 object-cover">
+              <span class="badge quick-sale-badge">Quick Sale</span>
+            </div>
+            <div class="p-2">
+              <div class="flex justify-between items-start">
+                <h4 class="font-medium text-sm line-clamp-1">Samsung TV 43"</h4>
+                <button class="text-gray-400 hover:text-red-500">
+                  <i class="far fa-heart"></i>
+                </button>
+              </div>
+              <div class="flex justify-between items-center mt-1">
+                <span class="font-bold text-green-600">KSh 35,000</span>
+                <span class="text-xs text-gray-500">2.7 km</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Featured Item 3 -->
+          <div class="flex-shrink-0 w-40 bg-white rounded-lg overflow-hidden shadow-sm">
+            <div class="relative">
+              <img src="https://cdn.pixabay.com/photo/2017/08/06/15/13/laptop-2593041_960_720.jpg" alt="Laptop" class="w-full h-32 object-cover">
+              <span class="badge quick-sale-badge">Quick Sale</span>
+            </div>
+            <div class="p-2">
+              <div class="flex justify-between items-start">
+                <h4 class="font-medium text-sm line-clamp-1">MacBook Pro 2023</h4>
+                <button class="text-gray-400 hover:text-red-500">
+                  <i class="far fa-heart"></i>
+                </button>
+              </div>
+              <div class="flex justify-between items-center mt-1">
+                <span class="font-bold text-green-600">KSh 120,000</span>
+                <span class="text-xs text-gray-500">3.4 km</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Regular Listings -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- Listing 1 -->
+        <div class="listing-card bg-white rounded-lg overflow-hidden shadow-sm">
+          <div class="relative">
+            <img src="https://cdn.pixabay.com/photo/2017/01/22/12/07/imac-1999636_960_720.jpg" alt="iMac" class="w-full h-48 object-cover">
+            <span class="badge distance-badge">0.5 km</span>
+          </div>
+          <div class="p-3">
+            <div class="flex justify-between">
+              <h3 class="font-medium">Apple iMac 27"</h3>
+              <button class="text-gray-400 hover:text-red-500">
+                <i class="far fa-heart"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2 mt-1">Slightly used iMac, great condition, comes with keyboard and mouse.</p>
+            <div class="flex justify-between items-center mt-2">
+              <span class="price-tag">KSh 75,000</span>
+              <div class="flex items-center">
+                <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" alt="Seller" class="w-6 h-6 rounded-full mr-1">
+                <span class="text-xs text-gray-500">John D.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Listing 2 -->
+        <div class="listing-card bg-white rounded-lg overflow-hidden shadow-sm">
+          <div class="relative">
+            <img src="https://cdn.pixabay.com/photo/2016/11/18/13/03/apple-1834328_960_720.jpg" alt="iPhone" class="w-full h-48 object-cover">
+            <span class="badge distance-badge">1.2 km</span>
+          </div>
+          <div class="p-3">
+            <div class="flex justify-between">
+              <h3 class="font-medium">iPhone 13 Pro</h3>
+              <button class="text-gray-400 hover:text-red-500">
+                <i class="far fa-heart"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2 mt-1">Like new, 256GB storage, comes with original box and charger.</p>
+            <div class="flex justify-between items-center mt-2">
+              <span class="price-tag">KSh 65,000</span>
+              <div class="flex items-center">
+                <img src="https://cdn.pixabay.com/photo/2016/11/18/23/38/child-1837375_960_720.png" alt="Seller" class="w-6 h-6 rounded-full mr-1">
+                <span class="text-xs text-gray-500">Mary W. <i class="fas fa-check-circle verified-badge"></i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Listing 3 -->
+        <div class="listing-card bg-white rounded-lg overflow-hidden shadow-sm">
+          <div class="relative">
+            <img src="https://cdn.pixabay.com/photo/2015/02/03/23/41/wooden-desk-623533_960_720.jpg" alt="Office Desk" class="w-full h-48 object-cover">
+            <span class="badge distance-badge">2.8 km</span>
+          </div>
+          <div class="p-3">
+            <div class="flex justify-between">
+              <h3 class="font-medium">Wooden Office Desk</h3>
+              <button class="text-gray-400 hover:text-red-500">
+                <i class="far fa-heart"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2 mt-1">Solid wood office desk, excellent condition. Must pick up.</p>
+            <div class="flex justify-between items-center mt-2">
+              <span class="price-tag">KSh 12,000</span>
+              <div class="flex items-center">
+                <img src="https://cdn.pixabay.com/photo/2022/06/05/21/10/person-7245634_960_720.png" alt="Seller" class="w-6 h-6 rounded-full mr-1">
+                <span class="text-xs text-gray-500">Sam K.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Listing 4 -->
+        <div class="listing-card bg-white rounded-lg overflow-hidden shadow-sm">
+          <div class="relative">
+            <img src="https://cdn.pixabay.com/photo/2016/11/19/15/50/chair-1840011_960_720.jpg" alt="Sofa" class="w-full h-48 object-cover">
+            <span class="badge distance-badge">3.2 km</span>
+          </div>
+          <div class="p-3">
+            <div class="flex justify-between">
+              <h3 class="font-medium">3-Seater Gray Sofa</h3>
+              <button class="text-gray-400 hover:text-red-500">
+                <i class="far fa-heart"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2 mt-1">Comfortable sofa in good condition. Must sell quickly due to moving.</p>
+            <div class="flex justify-between items-center mt-2">
+              <span class="price-tag">KSh 25,000</span>
+              <div class="flex items-center">
+                <img src="https://cdn.pixabay.com/photo/2016/11/29/13/14/attractive-1869761_960_720.jpg" alt="Seller" class="w-6 h-6 rounded-full mr-1">
+                <span class="text-xs text-gray-500">Lucy M. <i class="fas fa-check-circle verified-badge"></i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Listing 5 -->
+        <div class="listing-card bg-white rounded-lg overflow-hidden shadow-sm">
+          <div class="relative">
+            <img src="https://cdn.pixabay.com/photo/2013/07/13/13/42/watch-161853_960_720.png" alt="Watch" class="w-full h-48 object-cover">
+            <span class="badge distance-badge">4.5 km</span>
+          </div>
+          <div class="p-3">
+            <div class="flex justify-between">
+              <h3 class="font-medium">Samsung Galaxy Watch</h3>
+              <button class="text-gray-400 hover:text-red-500">
+                <i class="far fa-heart"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2 mt-1">Galaxy Watch 4, only used for 2 months. Perfect condition with box.</p>
+            <div class="flex justify-between items-center mt-2">
+              <span class="price-tag">KSh 15,000</span>
+              <div class="flex items-center">
+                <img src="https://cdn.pixabay.com/photo/2016/03/27/21/52/woman-1284411_960_720.jpg" alt="Seller" class="w-6 h-6 rounded-full mr-1">
+                <span class="text-xs text-gray-500">Jane A.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Listing 6 -->
+        <div class="listing-card bg-white rounded-lg overflow-hidden shadow-sm">
+          <div class="relative">
+            <img src="https://cdn.pixabay.com/photo/2014/08/05/10/30/iphone-410324_960_720.jpg" alt="iPhone" class="w-full h-48 object-cover">
+            <span class="badge distance-badge">5.1 km</span>
+          </div>
+          <div class="p-3">
+            <div class="flex justify-between">
+              <h3 class="font-medium">iPhone 12 64GB</h3>
+              <button class="text-gray-400 hover:text-red-500">
+                <i class="far fa-heart"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2 mt-1">Good condition, minor scratches, battery health 89%. No box.</p>
+            <div class="flex justify-between items-center mt-2">
+              <span class="price-tag">KSh 45,000</span>
+              <div class="flex items-center">
+                <img src="https://cdn.pixabay.com/photo/2018/08/28/13/29/avatar-3637561_960_720.png" alt="Seller" class="w-6 h-6 rounded-full mr-1">
+                <span class="text-xs text-gray-500">Tom B. <i class="fas fa-check-circle verified-badge"></i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Load More Button -->
+      <div class="flex justify-center mt-6">
+        <button class="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-50">
+          Load More <i class="fas fa-chevron-down"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Chat Tab Content -->
+    <div x-show="activeTab === 'chat'" class="space-y-4">
+      <h2 class="text-lg font-semibold">Messages</h2>
+      
+      <div class="bg-white rounded-lg shadow-sm divide-y">
+        <!-- Chat Thread 1 -->
+        <div class="flex items-center p-4 hover:bg-gray-50 cursor-pointer">
+          <img src="https://cdn.pixabay.com/photo/2016/11/18/23/38/child-1837375_960_720.png" alt="Seller" class="w-10 h-10 rounded-full mr-3">
+          <div class="flex-1">
+            <div class="flex justify-between items-center">
+              <h4 class="font-medium">Mary W. <i class="fas fa-check-circle verified-badge text-sm"></i></h4>
+              <span class="text-xs text-gray-500">2h ago</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-gray-600 line-clamp-1">Is the iPhone still available?</p>
+              <span class="bg-green-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">1</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Chat Thread 2 -->
+        <div class="flex items-center p-4 hover:bg-gray-50 cursor-pointer">
+          <img src="https://cdn.pixabay.com/photo/2016/11/29/13/14/attractive-1869761_960_720.jpg" alt="Seller" class="w-10 h-10 rounded-full mr-3">
+          <div class="flex-1">
+            <div class="flex justify-between items-center">
+              <h4 class="font-medium">Lucy M. <i class="fas fa-check-circle verified-badge text-sm"></i></h4>
+              <span class="text-xs text-gray-500">Yesterday</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-gray-500 line-clamp-1">Great! I'll be there at 3pm.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Chat Thread 3 -->
+        <div class="flex items-center p-4 hover:bg-gray-50 cursor-pointer">
+          <img src="https://cdn.pixabay.com/photo/2018/08/28/13/29/avatar-3637561_960_720.png" alt="Seller" class="w-10 h-10 rounded-full mr-3">
+          <div class="flex-1">
+            <div class="flex justify-between items-center">
+              <h4 class="font-medium">Tom B. <i class="fas fa-check-circle verified-badge text-sm"></i></h4>
+              <span class="text-xs text-gray-500">2d ago</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-gray-500 line-clamp-1">Can you do KSh 40,000?</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- No Messages State -->
+      <div x-show="false" class="flex flex-col items-center justify-center py-10 text-center">
+        <div class="bg-gray-100 p-5 rounded-full mb-4">
+          <i class="fas fa-comments text-3xl text-gray-400"></i>
+        </div>
+        <h3 class="font-medium text-gray-800">No messages yet</h3>
+        <p class="text-sm text-gray-500 mt-1 max-w-xs">When you contact sellers or receive messages, they'll appear here.</p>
+      </div>
+    </div>
+    
+    <!-- Sell Tab Content -->
+    <div x-show="activeTab === 'sell'" class="space-y-4">
+      <h2 class="text-lg font-semibold">List Your Item</h2>
+      
+      <form class="bg-white rounded-lg shadow-sm p-4 space-y-4">
+        <!-- Image Upload -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Item Photos (up to 5)</label>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="image-upload-placeholder">
+              <div class="text-center">
+                <i class="fas fa-camera text-xl mb-1"></i>
+                <p class="text-xs">Tap to add</p>
+              </div>
+            </div>
+            <div class="image-upload-placeholder">
+              <div class="text-center">
+                <i class="fas fa-plus text-xl"></i>
+              </div>
+            </div>
+            <div class="image-upload-placeholder">
+              <div class="text-center">
+                <i class="fas fa-plus text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Title & Category -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+          <input type="text" placeholder="What are you selling?" class="w-full p-3 border border-gray-300 rounded-lg">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+          <select class="w-full p-3 border border-gray-300 rounded-lg bg-white">
+            <option value="">Select a category</option>
+            <option value="electronics">Phones & Electronics</option>
+            <option value="furniture">Furniture</option>
+            <option value="clothes">Clothes & Shoes</option>
+            <option value="appliances">Home Appliances</option>
+          </select>
+        </div>
+        
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <textarea placeholder="Describe your item (condition, brand, etc.)" rows="3" class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
+        </div>
+        
+        <!-- Price -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Price (KSh)</label>
+          <div class="relative">
+            <input type="number" placeholder="0" class="w-full p-3 border border-gray-300 rounded-lg pl-12">
+            <span class="absolute left-0 top-0 h-full flex items-center justify-center px-3 bg-gray-100 rounded-l-lg border-r font-medium">KSh</span>
+          </div>
+          <div class="mt-1 flex justify-between items-center">
+            <span class="text-xs text-gray-500">Suggested: KSh 45,000 - 55,000</span>
+            <button type="button" class="text-xs text-green-600 font-medium">Use suggested</button>
+          </div>
+        </div>
+        
+        <!-- Location -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+          <div class="relative">
+            <input type="text" placeholder="Your location" class="w-full p-3 border border-gray-300 rounded-lg pl-10">
+            <i class="fas fa-map-marker-alt absolute left-3 top-3 text-gray-400"></i>
+            <button type="button" class="absolute right-3 top-3 text-green-600 font-medium text-sm">Detect</button>
+          </div>
+        </div>
+        
+        <!-- Quick Sale Option -->
+        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+          <div>
+            <h4 class="font-medium">Quick Sale</h4>
+            <p class="text-xs text-gray-500">Boost visibility to sell faster</p>
+          </div>
+          <label class="switch relative inline-block w-12 h-6">
+            <input type="checkbox" class="opacity-0 w-0 h-0">
+            <span class="slider absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 transition-all duration-300 rounded-full before:absolute before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-white before:transition-all before:duration-300 before:rounded-full"></span>
+          </label>
+        </div>
+        
+        <!-- Submit Button -->
+        <button type="button" class="w-full bg-green-600 text-white font-medium py-3 rounded-lg hover:bg-green-700 flex items-center justify-center">
+          List Item Now
+        </button>
+      </form>
+    </div>
+    
+    <!-- Favorites Tab Content -->
+    <div x-show="activeTab === 'favorites'" class="space-y-4">
+      <h2 class="text-lg font-semibold">Your Favorites</h2>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Favorite Item 1 -->
+        <div class="listing-card bg-white rounded-lg overflow-hidden shadow-sm">
+          <div class="relative">
+            <img src="https://cdn.pixabay.com/photo/2016/11/29/12/30/phone-1869510_960_720.jpg" alt="iPhone" class="w-full h-48 object-cover">
+            <span class="badge distance-badge">1.2 km</span>
+          </div>
+          <div class="p-3">
+            <div class="flex justify-between">
+              <h3 class="font-medium">iPhone 14 Pro</h3>
+              <button class="text-red-500">
+                <i class="fas fa-heart"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2 mt-1">128GB, Deep Purple, bought in 2023. Minor scratches on back.</p>
+            <div class="flex justify-between items-center mt-2">
+              <span class="price-tag">KSh 85,000</span>
+              <div class="flex items-center">
+                <img src="https://cdn.pixabay.com/photo/2016/11/18/23/38/child-1837375_960_720.png" alt="Seller" class="w-6 h-6 rounded-full mr-1">
+                <span class="text-xs text-gray-500">Mary W. <i class="fas fa-check-circle verified-badge"></i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Favorite Item 2 -->
+        <div class="listing-card bg-white rounded-lg overflow-hidden shadow-sm">
+          <div class="relative">
+            <img src="https://cdn.pixabay.com/photo/2017/12/09/08/18/tv-3007539_960_720.jpg" alt="TV" class="w-full h-48 object-cover">
+            <span class="badge distance-badge">2.7 km</span>
+          </div>
+          <div class="p-3">
+            <div class="flex justify-between">
+              <h3 class="font-medium">Samsung TV 43"</h3>
+              <button class="text-red-500">
+                <i class="fas fa-heart"></i>
+              </button>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2 mt-1">4K Smart TV, purchased 8 months ago. Perfect working condition.</p>
+            <div class="flex justify-between items-center mt-2">
+              <span class="price-tag">KSh 35,000</span>
+              <div class="flex items-center">
+                <img src="https://cdn.pixabay.com/photo/2018/08/28/13/29/avatar-3637561_960_720.png" alt="Seller" class="w-6 h-6 rounded-full mr-1">
+                <span class="text-xs text-gray-500">Tom B. <i class="fas fa-check-circle verified-badge"></i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- No Favorites State -->
+      <div x-show="false" class="flex flex-col items-center justify-center py-10 text-center">
+        <div class="bg-gray-100 p-5 rounded-full mb-4">
+          <i class="far fa-heart text-3xl text-gray-400"></i>
+        </div>
+        <h3 class="font-medium text-gray-800">No favorites yet</h3>
+        <p class="text-sm text-gray-500 mt-1 max-w-xs">Tap the heart icon on items you like to save them here for later.</p>
+        <button class="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700">Browse Items</button>
+      </div>
+    </div>
+    
+    <!-- Profile Tab Content -->
+    <div x-show="activeTab === 'profile'" class="space-y-4">
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center">
+          <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" alt="Profile" class="w-16 h-16 rounded-full mr-4">
+          <div>
+            <h2 class="font-semibold text-lg">John Smith</h2>
+            <p class="text-sm text-gray-600">Member since June 2023</p>
+            <div class="flex items-center mt-1">
+              <i class="fas fa-star text-yellow-400"></i>
+              <span class="text-sm ml-1">4.8 (23 ratings)</span>
+              <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">Verified Seller</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-4 flex justify-between">
+          <button class="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 flex-1 mr-2">Edit Profile</button>
+          <button class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 flex-1">My Listings</button>
+        </div>
+      </div>
+      
+      <!-- Account Stats -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-white rounded-lg shadow-sm p-4">
+          <h3 class="text-sm text-gray-500">Active Listings</h3>
+          <p class="text-2xl font-semibold mt-1">5</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4">
+          <h3 class="text-sm text-gray-500">Items Sold</h3>
+          <p class="text-2xl font-semibold mt-1">12</p>
+        </div>
+      </div>
+      
+      <!-- Verification -->
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <h3 class="font-medium">Account Verification</h3>
+        
+        <div class="mt-3 space-y-3">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center">
+              <div class="bg-green-100 p-2 rounded-full mr-3">
+                <i class="fas fa-phone text-green-600"></i>
+              </div>
+              <div>
+                <p class="font-medium">Phone Number</p>
+                <p class="text-sm text-gray-500">+2547*****123</p>
+              </div>
+            </div>
+            <span class="text-green-600">Verified</span>
+          </div>
+          
+          <div class="flex justify-between items-center">
+            <div class="flex items-center">
+              <div class="bg-gray-100 p-2 rounded-full mr-3">
+                <i class="fas fa-id-card text-gray-600"></i>
+              </div>
+              <div>
+                <p class="font-medium">ID Verification</p>
+                <p class="text-sm text-gray-500">Verify your identity</p>
+              </div>
+            </div>
+            <button class="text-sm text-green-600 font-medium">Verify</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Settings -->
+      <div class="bg-white rounded-lg shadow-sm divide-y">
+        <div class="p-4 flex justify-between items-center">
+          <div class="flex items-center">
+            <i class="fas fa-bell mr-3 text-gray-600"></i>
+            <span>Notifications</span>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+        
+        <div class="p-4 flex justify-between items-center">
+          <div class="flex items-center">
+            <i class="fas fa-lock mr-3 text-gray-600"></i>
+            <span>Privacy & Security</span>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+        
+        <div class="p-4 flex justify-between items-center">
+          <div class="flex items-center">
+            <i class="fas fa-question-circle mr-3 text-gray-600"></i>
+            <span>Help & Support</span>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+        
+        <div class="p-4 flex justify-between items-center">
+          <div class="flex items-center">
+            <i class="fas fa-sign-out-alt mr-3 text-gray-600"></i>
+            <span>Log Out</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Admin Toggle -->
+      <div class="p-4 bg-gray-100 rounded-lg">
+        <div class="flex justify-between items-center">
+          <div>
+            <h4 class="font-medium">Admin Panel</h4>
+            <p class="text-xs text-gray-500">Access admin controls</p>
+          </div>
+          <label class="switch relative inline-block w-12 h-6">
+            <input type="checkbox" class="opacity-0 w-0 h-0">
+            <span class="slider absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 transition-all duration-300 rounded-full before:absolute before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-white before:transition-all before:duration-300 before:rounded-full"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Product Detail Modal -->
+  <div x-show="currentModal === 'productDetail'" class="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4" x-transition>
+    <div class="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto" @click.away="currentModal = null">
+      <!-- Image Gallery -->
+      <div class="swiper">
+        <div class="swiper-wrapper">
+          <div class="swiper-slide">
+            <img src="https://cdn.pixabay.com/photo/2016/11/29/12/30/phone-1869510_960_720.jpg" alt="iPhone 1" class="w-full h-64 object-cover">
+          </div>
+          <div class="swiper-slide">
+            <img src="https://cdn.pixabay.com/photo/2014/08/05/10/30/iphone-410324_960_720.jpg" alt="iPhone 2" class="w-full h-64 object-cover">
+          </div>
+        </div>
+        <div class="swiper-pagination"></div>
+      </div>
+      
+      <!-- Content -->
+      <div class="p-4">
+        <div class="flex justify-between items-start">
+          <h2 class="text-xl font-semibold">iPhone 14 Pro</h2>
+          <button class="text-gray-400 hover:text-red-500">
+            <i class="far fa-heart"></i>
+          </button>
+        </div>
+        
+        <div class="mt-2">
+          <span class="text-2xl font-bold text-green-600">KSh 85,000</span>
+        </div>
+        
+        <div class="mt-4">
+          <h3 class="font-medium">Description</h3>
+          <p class="text-gray-700 mt-1">
+            128GB, Deep Purple, bought in 2023. Minor scratches on back. Battery health 95%. 
+            Comes with original box, charger and earphones. 
+            Still under warranty for 6 more months.
+          </p>
+        </div>
+        
+        <!-- Seller Info -->
+        <div class="mt-4 bg-gray-50 p-3 rounded-lg flex items-center">
+          <img src="https://cdn.pixabay.com/photo/2016/11/18/23/38/child-1837375_960_720.png" alt="Seller" class="w-12 h-12 rounded-full mr-3">
+          <div class="flex-1">
+            <div class="flex items-center">
+              <h4 class="font-medium">Mary W.</h4>
+              <i class="fas fa-check-circle verified-badge ml-1"></i>
+            </div>
+            <div class="flex items-center text-sm text-gray-500">
+              <i class="fas fa-star text-yellow-400 mr-1"></i>
+              <span>4.9 (37 ratings)</span>
+            </div>
+          </div>
+          <span class="text-xs text-gray-500">Nairobi</span>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <button class="bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 flex items-center justify-center">
+            <i class="fas fa-comments mr-2"></i> Chat
+          </button>
+          <button class="bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 flex items-center justify-center">
+            <i class="fab fa-whatsapp mr-2"></i> WhatsApp
+          </button>
+        </div>
+        
+        <!-- Extra Details -->
+        <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-gray-500">Category</p>
+            <p class="font-medium">Phones & Electronics</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Posted</p>
+            <p class="font-medium">2 days ago</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Views</p>
+            <p class="font-medium">52 views</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Location</p>
+            <p class="font-medium">Westlands, Nairobi</p>
+          </div>
+        </div>
+        
+        <!-- Report Button -->
+        <div class="mt-4 flex justify-center">
+          <button class="text-sm text-gray-500 hover:text-gray-700">
+            <i class="fas fa-flag mr-1"></i> Report Listing
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Detail Modal -->
+  <div x-show="currentModal === 'chatDetail'" class="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4" x-transition>
+    <div class="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col" @click.away="currentModal = null">
+      <!-- Header -->
+      <div class="p-3 border-b flex items-center sticky top-0 bg-white">
+        <button class="mr-2" @click="currentModal = null">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <img src="https://cdn.pixabay.com/photo/2016/11/18/23/38/child-1837375_960_720.png" alt="Seller" class="w-10 h-10 rounded-full mr-3">
+        <div class="flex-1">
+          <div class="flex items-center">
+            <h4 class="font-medium">Mary W.</h4>
+            <i class="fas fa-check-circle verified-badge ml-1 text-sm"></i>
+          </div>
+          <p class="text-xs text-gray-500">iPhone 14 Pro</p>
+        </div>
+        <div class="price-tag text-sm">KSh 85,000</div>
+      </div>
+      
+      <!-- Chat Messages -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-3" style="max-height: 60vh">
+        <!-- Product Info -->
+        <div class="bg-gray-50 p-2 rounded-lg flex items-center mb-4">
+          <img src="https://cdn.pixabay.com/photo/2016/11/29/12/30/phone-1869510_960_720.jpg" alt="Product" class="w-14 h-14 object-cover rounded-lg mr-3">
+          <div class="flex-1">
+            <p class="font-medium text-sm">iPhone 14 Pro</p>
+            <p class="text-green-600 font-bold text-sm">KSh 85,000</p>
+          </div>
+        </div>
+        
+        <!-- Date Separator -->
+        <div class="flex items-center justify-center">
+          <span class="text-xs bg-gray-100 text-gray-500 py-1 px-3 rounded-full">Today, 2:30 PM</span>
+        </div>
+        
+        <!-- Messages -->
+        <div class="message-bubble received">
+          <p>Hello, is this iPhone still available?</p>
+        </div>
+        
+        <div class="message-bubble sent">
+          <p>Yes, it's still available!</p>
+        </div>
+        
+        <div class="message-bubble received">
+          <p>Great! What's the lowest price you can do?</p>
+        </div>
+        
+        <div class="message-bubble sent">
+          <p>I can do KSh 80,000 if you can pick it up today.</p>
+        </div>
+        
+        <div class="message-bubble received">
+          <p>Can we meet somewhere in town?</p>
+        </div>
+        
+        <!-- Typing Indicator -->
+        <div class="typing-indicator message-bubble received" style="padding: 10px 20px;">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      
+      <!-- Input Area -->
+      <div class="p-3 border-t sticky bottom-0 bg-white">
+        <div class="flex items-center gap-2">
+          <button class="p-2 text-gray-500 hover:text-gray-700">
+            <i class="fas fa-camera"></i>
+          </button>
+          <input type="text" placeholder="Type a message..." class="flex-1 border rounded-full py-2 px-4 focus:outline-none focus:border-green-500">
+          <button class="bg-green-600 text-white rounded-full p-2 w-10 h-10 flex items-center justify-center">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bottom Navigation -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white bottom-nav z-20">
+    <div class="flex justify-around items-center">
+      <button @click="activeTab = 'home'" class="p-3 flex flex-col items-center" :class="{'text-green-600': activeTab === 'home'}">
+        <i class="fas fa-home text-xl"></i>
+        <span class="text-xs mt-1">Home</span>
+      </button>
+      <button @click="activeTab = 'chat'" class="p-3 flex flex-col items-center" :class="{'text-green-600': activeTab === 'chat'}">
+        <i class="fas fa-comments text-xl"></i>
+        <span class="text-xs mt-1">Chat</span>
+      </button>
+      <button @click="activeTab = 'sell'" class="sell-button bg-green-600 text-white rounded-full w-14 h-14 flex flex-col items-center justify-center -mt-5">
+        <i class="fas fa-plus text-xl"></i>
+        <span class="text-[10px] mt-0.5">Sell</span>
+      </button>
+      <button @click="activeTab = 'favorites'" class="p-3 flex flex-col items-center" :class="{'text-green-600': activeTab === 'favorites'}">
+        <i class="fas fa-heart text-xl"></i>
+        <span class="text-xs mt-1">Favorites</span>
+      </button>
+      <button @click="activeTab = 'profile'" class="p-3 flex flex-col items-center" :class="{'text-green-600': activeTab === 'profile'}">
+        <i class="fas fa-user text-xl"></i>
+        <span class="text-xs mt-1">Profile</span>
+      </button>
+    </div>
+  </nav>
+  
+  <script id="app-script">
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize any components that need JavaScript functionality
+      document.querySelectorAll('.listing-card').forEach(card => {
+        card.addEventListener('click', () => {
+          Alpine.store('app').currentModal = 'productDetail';
+          initializeSwiper();
+        });
+      });
+      
+      document.querySelectorAll('.chat-thread').forEach(thread => {
+        thread.addEventListener('click', () => {
+          Alpine.store('app').currentModal = 'chatDetail';
+        });
+      });
+      
+      // Setup for checkbox sliders
+      document.querySelectorAll('.switch input').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          const slider = this.nextElementSibling;
+          if (this.checked) {
+            slider.classList.add('bg-green-500');
+            slider.classList.remove('bg-gray-300');
+            slider.querySelector(':before').style.transform = 'translateX(18px)';
+          } else {
+            slider.classList.remove('bg-green-500');
+            slider.classList.add('bg-gray-300');
+            slider.querySelector(':before').style.transform = 'translateX(0)';
+          }
+        });
+      });
+    });
+    
+    function initializeSwiper() {
+      new Swiper('.swiper', {
+        pagination: {
+          el: '.swiper-pagination',
+          dynamicBullets: true,
+        },
+      });
+    }
+    
+    // Setup Alpine.js store
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('app', {
+        currentModal: null
+      });
+    });
+  </script>
+</body>
+</html>
